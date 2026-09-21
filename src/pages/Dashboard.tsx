@@ -21,11 +21,7 @@ export const Dashboard: React.FC = () => {
   const [isActionHovered, setIsActionHovered] = useState(false);
 
   const handleUploadClick = () => {
-    if (!isAuthenticated) {
-      navigate('/signin', { state: { from: '/upload' } });
-    } else {
-      navigate('/upload');
-    }
+    navigate('/upload');
   };
 
   return (

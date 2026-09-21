@@ -36,14 +36,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Fallback
     }
-    return null;
+    return {
+      id: 'demo-user-1',
+      name: 'Priyanka',
+      email: 'priyanka@example.com',
+      createdAt: new Date().toISOString(),
+    };
   });
 
-  // Verify backend session on mount if token exists
+  // Verify backend session on mount if token exists, or auto-login demo account
   useEffect(() => {
     const checkAuth = async () => {
-      const activeToken = getAuthToken();
-      if (activeToken) {
+      let activeToken = getAuthToken();
+      if (!activeToken) {
+        try {
+          const res = await authApi.login('priyanka@example.com', 'password123');
+          if (res && res.success && res.token && res.user) {
+            setAuthToken(res.token);
+            setToken(res.token);
+            const apiUser: AuthUser = {
+              id: res.user.id || res.user._id,
+              name: res.user.fullName || res.user.name || 'Priyanka',
+              email: res.user.email,
+              createdAt: res.user.createdAt || new Date().toISOString(),
+            };
+            setUser(apiUser);
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(apiUser));
+            return;
+          }
+        } catch {
+          // fallback to local demo state
+        }
+      } else {
         try {
           const data = await authApi.getMe();
           if (data && data.success && data.user) {

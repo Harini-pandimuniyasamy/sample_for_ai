@@ -122,13 +122,17 @@ export const documentsApi = {
     return res.json();
   },
 
-  async download(id: string, fileName?: string) {
-    return this.downloadCleaned(id, fileName);
+  async download(id: string, fileName?: string, format?: string) {
+    return this.downloadCleaned(id, fileName, format);
   },
 
-  async downloadCleaned(id: string, fileName?: string) {
+  async downloadCleaned(id: string, fileName?: string, format?: string) {
     const token = getAuthToken();
-    const url = `${API_BASE}/documents/${id}/download-cleaned${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    const params = new URLSearchParams();
+    if (token) params.set('token', token);
+    if (format) params.set('format', format);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const url = `${API_BASE}/documents/${id}/download-cleaned${queryString}`;
 
     const res = await fetch(url, {
       method: 'GET',

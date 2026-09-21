@@ -132,8 +132,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    // 2. Perform algorithmic cleaning preserving content
-    const cleaningResult = cleanDocumentText(rawText, options);
+    // 2. Perform AI cleaning preserving complete content and structure
+    const cleaningResult = await cleanDocumentText(rawText, options);
 
     if (!cleaningResult.cleanedText || cleaningResult.cleanedText.trim().length === 0) {
       initialDocRecord.status = 'failed';
@@ -223,8 +223,8 @@ export const submitTextDocument = async (req: AuthRequest, res: Response): Promi
       }
     }
 
-    // 1. Clean the text
-    const cleaningResult = cleanDocumentText(text, options);
+    // 1. Clean the text using AI pipeline
+    const cleaningResult = await cleanDocumentText(text, options);
 
     // 2. Save original text to disk in server/uploads/original/
     const uploadsBase = path.resolve(process.cwd(), 'server/uploads');
@@ -491,15 +491,33 @@ export const downloadCleanedDocument = async (req: AuthRequest, res: Response): 
       filePath = regenerated.cleanedFilePath;
     }
 
+    // If user requested a specific format (pdf, docx, txt) different from existing file
+    const requestedFormat = (req.query.format as string)?.toLowerCase();
+    const validFormats = ['pdf', 'docx', 'doc', 'txt'];
+    if (requestedFormat && validFormats.includes(requestedFormat)) {
+      const targetExt = requestedFormat === 'doc' ? '.docx' : `.${requestedFormat}`;
+      const currentExt = path.extname(filePath).toLowerCase();
+      if (currentExt !== targetExt) {
+        const textToExport = document.cleanedText || document.originalText;
+        if (textToExport && textToExport.trim().length > 0) {
+          const baseName = path.basename(document.originalFileName, path.extname(document.originalFileName));
+          const converted = await saveCleanedFile(baseName, targetExt, textToExport, document.originalFileName);
+          filePath = converted.cleanedFilePath;
+        }
+      }
+    }
+
     const stats = fs.statSync(filePath);
     if (stats.size === 0) {
       res.status(500).json({ success: false, message: 'Generated cleaned document is unexpectedly empty.' });
       return;
     }
 
-    const fileName = document.cleanedFileName || `cleaned_${document.originalFileName}`;
+    const fileExt = path.extname(filePath);
+    const baseOriginal = path.basename(document.originalFileName, path.extname(document.originalFileName));
+    const fileName = `${baseOriginal}_cleaned${fileExt}`;
     res.setHeader('Content-Length', stats.size.toString());
-    res.setHeader('Content-Type', document.cleanedFileType || getMimeType(path.extname(fileName)));
+    res.setHeader('Content-Type', getMimeType(fileExt));
     res.download(filePath, fileName, (err) => {
       if (err && !res.headersSent) {
         console.error('Cleaned download stream error:', err);

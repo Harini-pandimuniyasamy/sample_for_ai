@@ -149,47 +149,58 @@ export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }
   const startProcessingSimulation = (onComplete?: () => void) => {
     if (isProcessing) return;
     setIsProcessing(true);
-    setProcessingProgress(0);
+    setUploadError(null);
+    setProcessingProgress(15);
+    setProcessingStage(PROCESSING_STEPS[0].label);
 
-    const activeFile: UploadedFileInfo = uploadedFile || {
-      name: 'Sample_Contract_2024.pdf',
-      size: 2450000,
-      formattedSize: '2.45 MB',
-      type: 'application/pdf',
-      extension: 'pdf',
-      uploadedAt: new Date(),
-    };
+    if (!uploadedFile) {
+      setIsProcessing(false);
+      setUploadError('No document file was detected. Please upload a document to proceed.');
+      return;
+    }
 
     const steps = [
-      { progress: 15, stage: PROCESSING_STEPS[0].label, duration: 600 },
-      { progress: 35, stage: PROCESSING_STEPS[1].label, duration: 700 },
-      { progress: 65, stage: PROCESSING_STEPS[2].label, duration: 900 },
-      { progress: 85, stage: PROCESSING_STEPS[3].label, duration: 600 },
+      { progress: 30, stage: PROCESSING_STEPS[0].label, duration: 500 },
+      { progress: 50, stage: PROCESSING_STEPS[1].label, duration: 800 },
+      { progress: 75, stage: PROCESSING_STEPS[2].label, duration: 1000 },
+      { progress: 90, stage: PROCESSING_STEPS[3].label, duration: 800 },
       { progress: 96, stage: PROCESSING_STEPS[4].label, duration: 500 },
-      { progress: 100, stage: 'Document cleaned successfully.', duration: 400 },
     ];
 
     let currentStep = 0;
+    let timerId: any = null;
 
-    const runStep = () => {
+    const advanceProgress = () => {
       if (currentStep < steps.length) {
         const step = steps[currentStep];
         setProcessingProgress(step.progress);
         setProcessingStage(step.stage);
         currentStep++;
-        setTimeout(runStep, step.duration);
-      } else {
-        processDocument(activeFile, selectedOptions).then((result) => {
-          setProcessedDocument(result);
-          setIsProcessing(false);
-          if (onComplete) {
-            onComplete();
-          }
-        });
+        timerId = setTimeout(advanceProgress, step.duration);
       }
     };
 
-    runStep();
+    advanceProgress();
+
+    // Trigger real API upload and AI cleaning pipeline immediately
+    processDocument(uploadedFile, selectedOptions)
+      .then((result) => {
+        if (timerId) clearTimeout(timerId);
+        setProcessingProgress(100);
+        setProcessingStage('Document cleaned and restored successfully.');
+        setProcessedDocument(result);
+        setIsProcessing(false);
+        if (onComplete) {
+          onComplete();
+        }
+      })
+      .catch((err: any) => {
+        if (timerId) clearTimeout(timerId);
+        console.error('Document processing error:', err);
+        setUploadError(err.message || 'Document cleaning failed. Please verify your file.');
+        setProcessingStage('Processing failed');
+        setIsProcessing(false);
+      });
   };
 
   const resetWorkflow = () => {

@@ -20,6 +20,7 @@ export interface UploadedFileInfo {
 export type DownloadFormat = 'pdf' | 'docx' | 'txt';
 
 export interface ProcessedDocumentData {
+  id?: string;
   title: string;
   pageCount: number;
   originalText: string;

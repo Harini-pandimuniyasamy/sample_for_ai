@@ -145,14 +145,18 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
       {/* ========================================================================= */}
       {/* 1. TOP: 3D AI ASSISTANT CHARACTER COMPANION                              */}
       {/* ========================================================================= */}
-      <div className="flex flex-col items-center justify-center animate-in fade-in duration-400 z-20">
+      <div className="flex flex-col items-center justify-center animate-in fade-in duration-400 z-20 mb-1">
         <AICharacter
           action={characterAction}
           size="md"
           hasDocument={chamberStage === 'ENTERING' || isStagedFile}
         />
-        <div className="mt-2 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF8ED]/90 border border-[#6B315E]/20 text-[11px] font-mono text-[#6F6670] shadow-xs backdrop-blur-sm">
+        <div className="mt-2 flex flex-col items-center gap-1.5 text-center">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-[#FFF8ED]/90 border border-[#6B315E]/20 text-[10px] font-mono font-bold text-[#3C8D87] shadow-xs backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#3C8D87]" />
+            <span>• DOCU-BOT // {chamberStage === 'IDLE' ? 'STANDBY' : chamberStage}</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-[#FFF8ED]/90 border border-[#6B315E]/20 text-[11px] font-mono text-[#6F6670] shadow-xs backdrop-blur-sm">
             <span
               className={`w-1.5 h-1.5 rounded-full ${
                 chamberStage === 'SCANNING' || chamberStage === 'ENTERING'
@@ -163,31 +167,28 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
               }`}
             />
             <span className="font-semibold">
-              {characterAction === 'idle' && 'Docu-Bot: Monitoring Chamber'}
-              {characterAction === 'file_detected' && 'Docu-Bot: Target File Detected'}
-              {characterAction === 'carrying_document' && 'Docu-Bot: Transporting Document'}
-              {characterAction === 'inserting_chamber' && 'Docu-Bot: Ingesting into Chamber'}
-              {characterAction === 'worker_reading' && 'Docu-Bot: Optical Calibration'}
-              {characterAction === 'complete' && 'Docu-Bot: Materialization Ready'}
-              {characterAction === 'error' && 'Docu-Bot: Inspection Alert'}
+              {characterAction === 'idle' && '• Docu-Bot: Monitoring Chamber'}
+              {characterAction === 'file_detected' && '• Docu-Bot: Target File Detected'}
+              {characterAction === 'carrying_document' && '• Docu-Bot: Transporting Document'}
+              {characterAction === 'inserting_chamber' && '• Docu-Bot: Ingesting into Chamber'}
+              {characterAction === 'worker_reading' && '• Docu-Bot: Optical Calibration'}
+              {characterAction === 'complete' && '• Docu-Bot: Materialization Ready'}
+              {characterAction === 'error' && '• Docu-Bot: Inspection Alert'}
             </span>
           </div>
         </div>
-
-        {/* Optical Sensor Conduit Beam pointing from Bot toward Chamber */}
-        <div className="w-[1.5px] h-4 bg-gradient-to-b from-[#6B315E]/40 via-[#C65D45]/40 to-[#3C8D87]/40 my-0.5" />
       </div>
 
       {/* ========================================================================= */}
       {/* 2. MIDDLE: 3D ENTRY CHAMBER FRAME                                        */}
       {/* ========================================================================= */}
       <div
-        className={`relative w-full min-h-[300px] sm:min-h-[340px] rounded-3xl transition-all duration-500 flex flex-col items-center justify-center preserve-3d p-4 sm:p-6 ${
+        className={`relative w-full max-w-xl sm:max-w-2xl min-h-[310px] sm:min-h-[350px] rounded-3xl transition-all duration-500 flex flex-col items-center justify-center preserve-3d p-4 sm:p-6 ${
           isDragOver
             ? 'bg-[#FFF8ED]/95 border-2 border-[#E98268] shadow-[0_0_50px_rgba(233,130,104,0.35),0_20px_40px_rgba(36,22,47,0.15)] scale-[1.01]'
             : isStagedFile || chamberStage === 'READY'
             ? 'bg-[#FFF8ED]/90 border border-[#A8D5C2] shadow-xl'
-            : 'bg-[#FFF8ED]/75 border-2 border-dashed border-[#6B315E]/30 hover:border-[#C65D45] hover:bg-[#FFF8ED]/90 shadow-lg'
+            : 'bg-[#FFF8ED]/85 border-2 border-dashed border-[#6B315E]/25 hover:border-[#C65D45] hover:bg-[#FFF8ED]/95 shadow-md backdrop-blur-md'
         }`}
         style={{
           transform: `rotateX(${parallax.rotateX * 0.6}deg) rotateY(${parallax.rotateY * 0.6}deg)`,
@@ -201,7 +202,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
             scale: isDragOver ? 1.15 : 1,
           }}
           className="absolute -top-3 -left-3 w-8 h-8 border-t-4 border-l-4 rounded-tl-xl pointer-events-none transition-colors duration-300"
-          style={{ borderColor: isDragOver ? '#E98268' : '#6B315E' }}
+          style={{ borderColor: isDragOver ? '#E98268' : '#5A2346' }}
         />
         <motion.div
           animate={{
@@ -210,7 +211,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
             scale: isDragOver ? 1.15 : 1,
           }}
           className="absolute -top-3 -right-3 w-8 h-8 border-t-4 border-r-4 rounded-tr-xl pointer-events-none transition-colors duration-300"
-          style={{ borderColor: isDragOver ? '#E98268' : '#6B315E' }}
+          style={{ borderColor: isDragOver ? '#E98268' : '#5A2346' }}
         />
         <motion.div
           animate={{
@@ -219,7 +220,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
             scale: isDragOver ? 1.15 : 1,
           }}
           className="absolute -bottom-3 -left-3 w-8 h-8 border-b-4 border-l-4 rounded-bl-xl pointer-events-none transition-colors duration-300"
-          style={{ borderColor: isDragOver ? '#E98268' : '#6B315E' }}
+          style={{ borderColor: isDragOver ? '#E98268' : '#5A2346' }}
         />
         <motion.div
           animate={{
@@ -228,7 +229,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
             scale: isDragOver ? 1.15 : 1,
           }}
           className="absolute -bottom-3 -right-3 w-8 h-8 border-b-4 border-r-4 rounded-br-xl pointer-events-none transition-colors duration-300"
-          style={{ borderColor: isDragOver ? '#E98268' : '#6B315E' }}
+          style={{ borderColor: isDragOver ? '#E98268' : '#5A2346' }}
         />
 
         {/* ========================================================================= */}

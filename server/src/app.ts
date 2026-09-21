@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import documentRoutes from './routes/documentRoutes';
@@ -32,11 +33,26 @@ export const createApp = () => {
 
   // API Health check
   app.get('/api/health', (_req, res) => {
-    res.json({
-      status: 'ok',
-      service: 'DocuClean AI API',
-      timestamp: new Date().toISOString(),
-    });
+    const readyState = mongoose.connection.readyState;
+    // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+    const isConnected = readyState === 1;
+
+    if (isConnected) {
+      res.status(200).json({
+        success: true,
+        server: 'running',
+        database: 'connected',
+        databaseName: mongoose.connection.name,
+        readyState: 1,
+      });
+    } else {
+      res.status(503).json({
+        success: false,
+        server: 'running',
+        database: 'disconnected',
+        readyState,
+      });
+    }
   });
 
   // API Routes (Primary /api/*)
