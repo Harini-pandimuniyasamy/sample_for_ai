@@ -8,18 +8,7 @@ const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'];
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 
 export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [uploadedFile, setUploadedFileState] = useState<UploadedFileInfo | null>(() => {
-    // Check if there was a previously staged file in sessionStorage for reload safety
-    const saved = sessionStorage.getItem('docclean_file');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
+  const [uploadedFile, setUploadedFileState] = useState<UploadedFileInfo | null>(null);
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>(() => {
     const saved = sessionStorage.getItem('docclean_options');
@@ -63,16 +52,10 @@ export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }
     return null;
   });
 
-  // Keep sessionStorage in sync for seamless browser refreshes
+  // Clear any legacy docclean_file from sessionStorage
   useEffect(() => {
-    if (uploadedFile) {
-      // omit rawFile for serialization
-      const { rawFile, ...serializable } = uploadedFile;
-      sessionStorage.setItem('docclean_file', JSON.stringify(serializable));
-    } else {
-      sessionStorage.removeItem('docclean_file');
-    }
-  }, [uploadedFile]);
+    sessionStorage.removeItem('docclean_file');
+  }, []);
 
   useEffect(() => {
     sessionStorage.setItem('docclean_options', JSON.stringify(selectedOptions));

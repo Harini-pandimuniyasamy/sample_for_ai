@@ -15,12 +15,14 @@ import {
   Mail,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useDocument } from '../context/DocumentContext';
 import { Button } from './Button';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { removeUploadedFile } = useDocument();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -216,6 +218,7 @@ export const Navbar: React.FC = () => {
                 if (!user) {
                   navigate('/signin', { state: { from: '/upload' } });
                 } else {
+                  removeUploadedFile();
                   navigate('/upload');
                 }
               }}

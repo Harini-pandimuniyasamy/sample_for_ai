@@ -14,13 +14,20 @@ import {
 import { Button } from '../components/Button';
 import { AICharacter } from '../components/AICharacter';
 import { useAuth } from '../context/AuthContext';
+import { useDocument } from '../context/DocumentContext';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { removeUploadedFile } = useDocument();
   const [isActionHovered, setIsActionHovered] = useState(false);
 
   const handleUploadClick = () => {
+    if (!isAuthenticated) {
+      navigate('/signin', { state: { from: '/upload' } });
+      return;
+    }
+    removeUploadedFile();
     navigate('/upload');
   };
 

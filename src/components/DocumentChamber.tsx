@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { UploadCloud, CheckCircle2, Loader2, Sparkles, FileText, ArrowUpCircle } from 'lucide-react';
 import { useMouseParallax } from '../hooks/useMouseParallax';
@@ -10,6 +10,7 @@ interface DocumentChamberProps {
   isStagedFile: boolean;
   fileName?: string;
   fileSize?: string;
+  fileType?: string;
   onClear?: () => void;
   onValidationError?: (error: string | null) => void;
 }
@@ -22,6 +23,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
   isStagedFile,
   fileName,
   fileSize,
+  fileType,
   onClear,
   onValidationError,
 }) => {
@@ -34,6 +36,16 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const parallax = useMouseParallax(10, 0.06);
+
+  useEffect(() => {
+    if (isStagedFile) {
+      setChamberStage('READY');
+      setCharacterAction('complete');
+    } else {
+      setChamberStage('IDLE');
+      setCharacterAction('idle');
+    }
+  }, [isStagedFile]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -59,7 +71,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
     // Client-side file size check
     if (file.size > MAX_FILE_SIZE) {
       if (onValidationError) {
-        onValidationError('File size exceeds the supported limit');
+        onValidationError('File size exceeds the supported limit (50MB max)');
       }
       setCharacterAction('error');
       setChamberStage('IDLE');
@@ -71,7 +83,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
     const ext = parts.length > 1 ? parts.pop()!.toLowerCase() : '';
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       if (onValidationError) {
-        onValidationError('Unsupported document format');
+        onValidationError('Unsupported document format. Please use PDF, DOC, DOCX, or TXT.');
       }
       setCharacterAction('error');
       setChamberStage('IDLE');
@@ -83,26 +95,10 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
       onValidationError(null);
     }
 
-    // Trigger AI Robot + Chamber Physical Ingestion Choreography
-    setCharacterAction('carrying_document');
-    setChamberStage('ENTERING');
-
-    // Sequence: CHARACTER CARRIES -> INSERTS INTO CHAMBER -> CHAMBER SCANS -> MATERIALIZES -> READY
-    setTimeout(() => {
-      setCharacterAction('inserting_chamber');
-      setChamberStage('MATERIALIZING');
-
-      setTimeout(() => {
-        setCharacterAction('worker_reading');
-        setChamberStage('SCANNING');
-
-        setTimeout(() => {
-          setCharacterAction('complete');
-          setChamberStage('READY');
-          onFileAccepted(file);
-        }, 1100);
-      }, 850);
-    }, 750);
+    // Stage real file immediately
+    setCharacterAction('complete');
+    setChamberStage('READY');
+    onFileAccepted(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -117,6 +113,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
     if (e.target.files && e.target.files[0]) {
       validateAndProcessFile(e.target.files[0]);
     }
+    e.target.value = '';
   };
 
   const triggerBrowse = () => {
@@ -279,10 +276,18 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
             </p>
 
             {/* Tactile Action Button Inside Dropzone */}
-            <div className="mb-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#24162F] via-[#6B315E] to-[#C65D45] text-[#FFF8ED] text-xs font-bold shadow-md group-hover:shadow-lg group-hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <button
+              type="button"
+              id="select-document-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerBrowse();
+              }}
+              className="mb-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#24162F] via-[#6B315E] to-[#C65D45] text-[#FFF8ED] text-xs font-bold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+            >
               <ArrowUpCircle className="w-4 h-4 text-[#A8D5C2]" />
               <span>Select Document</span>
-            </div>
+            </button>
 
             {/* Supported Document Badges */}
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -342,7 +347,7 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
             {/* 3D Mini Document Preview Core */}
             <div className="scale-75 sm:scale-90 mb-[-25px]">
               <DocumentCore
-                title={fileName || 'Quarterly_Audit_Report_2024.pdf'}
+                title={fileName || 'Document'}
                 customWidth="w-[280px]"
                 customHeight="h-[360px]"
                 separationFactor={0.1}
@@ -358,10 +363,10 @@ export const DocumentChamber: React.FC<DocumentChamberProps> = ({
                 </div>
                 <div className="text-left truncate">
                   <span className="text-xs font-bold text-[#24162F] block truncate">
-                    {fileName || 'Quarterly_Audit_Report_2024.pdf'}
+                    {fileName || 'Selected Document'}
                   </span>
                   <span className="text-[10px] font-mono text-[#6F6670]">
-                    {fileSize || '2.45 MB'} • Ingestion Verified
+                    {fileType ? `${fileType.toUpperCase()} • ` : ''}{fileSize || 'Ready'} • Ingestion Verified
                   </span>
                 </div>
               </div>

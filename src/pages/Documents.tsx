@@ -13,6 +13,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useDocument } from '../context/DocumentContext';
 import {
   getUserDocuments,
   deleteUserDocument,
@@ -24,6 +25,7 @@ import { Button } from '../components/Button';
 export const Documents: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { removeUploadedFile } = useDocument();
   const [documents, setDocuments] = useState<UserDocumentItem[]>([]);
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
 
@@ -163,7 +165,10 @@ export const Documents: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => navigate('/upload')}
+          onClick={() => {
+            removeUploadedFile();
+            navigate('/upload');
+          }}
           className="primary-btn text-[#FFF8ED] px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg cursor-pointer self-start sm:self-auto"
         >
           <Sparkles className="w-4 h-4 text-[#A8D5C2]" />
@@ -199,7 +204,10 @@ export const Documents: React.FC = () => {
 
           <Button
             size="md"
-            onClick={() => navigate('/upload')}
+            onClick={() => {
+              removeUploadedFile();
+              navigate('/upload');
+            }}
             rightIcon={<ArrowRight className="w-4 h-4 ml-1" />}
           >
             Clean Your First Document

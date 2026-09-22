@@ -23,11 +23,16 @@ const INITIAL_DEMO_USERS: StoredAccount[] = [
   },
 ];
 
+const STORAGE_KEY_LOGGED_OUT = 'docclean_logged_out';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => getAuthToken());
   const [user, setUser] = useState<AuthUser | null>(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEY_LOGGED_OUT) === 'true') {
+      return null;
+    }
     try {
       const savedUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
       if (savedUser) {
@@ -44,9 +49,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   });
 
-  // Verify backend session on mount if token exists, or auto-login demo account
+  // Verify backend session on mount if token exists, or auto-login demo account unless explicitly logged out
   useEffect(() => {
     const checkAuth = async () => {
+      if (localStorage.getItem(STORAGE_KEY_LOGGED_OUT) === 'true') {
+        return;
+      }
       let activeToken = getAuthToken();
       if (!activeToken) {
         try {
@@ -217,6 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(publicUser);
         try {
           localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(publicUser));
+          localStorage.removeItem(STORAGE_KEY_LOGGED_OUT);
         } catch {
           // ignore
         }
@@ -257,6 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(publicUser);
     try {
       localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(publicUser));
+      localStorage.removeItem(STORAGE_KEY_LOGGED_OUT);
     } catch {
       // ignore
     }
@@ -270,6 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthToken(null);
     try {
       localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+      localStorage.setItem(STORAGE_KEY_LOGGED_OUT, 'true');
     } catch {
       // ignore
     }

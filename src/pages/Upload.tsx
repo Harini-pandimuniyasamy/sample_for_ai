@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -30,10 +30,17 @@ Corrective   act1on   requ1red:  Immed1ate   AI  restorat1on`;
 
 export const Upload: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { uploadedFile, uploadError, setUploadedFile, removeUploadedFile } = useDocument();
 
   const [localValidationMessage, setLocalValidationMessage] = useState<string | null>(null);
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/signin', { state: { from: '/upload' } });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleFileAccepted = (file: File) => {
     setLocalValidationMessage(null);
@@ -42,7 +49,7 @@ export const Upload: React.FC = () => {
 
   const handleNext = () => {
     if (!uploadedFile) {
-      setLocalValidationMessage('Please introduce a document into the chamber first.');
+      setLocalValidationMessage('Please select or upload a document first.');
       return;
     }
     setLocalValidationMessage(null);
@@ -67,6 +74,7 @@ export const Upload: React.FC = () => {
         isStagedFile={!!uploadedFile}
         fileName={uploadedFile?.name}
         fileSize={uploadedFile?.formattedSize}
+        fileType={uploadedFile?.extension}
         onClear={removeUploadedFile}
         onValidationError={setLocalValidationMessage}
       />
