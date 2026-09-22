@@ -1,4 +1,18 @@
-const API_BASE = (import.meta as any).env?.VITE_API_URL || '/api';
+// Determine reliable API base endpoint for full-stack architecture
+const resolveApiBase = (): string => {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    const trimmed = envUrl.trim();
+    // Prevent invalid localhost bindings when running in preview/production containers
+    if (trimmed.includes('localhost:5000')) {
+      return '/api';
+    }
+    return trimmed.replace(/\/+$/, '');
+  }
+  return '/api';
+};
+
+const API_BASE = resolveApiBase();
 
 const TOKEN_KEY = 'docuclean_auth_token';
 
@@ -34,6 +48,31 @@ const getHeaders = (isMultipart = false): HeadersInit => {
   return headers;
 };
 
+/**
+ * Safely parse HTTP responses and gracefully handle HTML/non-JSON error pages
+ */
+async function handleResponse(res: Response): Promise<any> {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      const data = await res.json();
+      return data;
+    } catch {
+      // json parse failed
+    }
+  }
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Server returned status ${res.status}: ${res.statusText || 'Unable to process request'}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('Server returned an unexpected response format.');
+  }
+}
+
 // =========================================================================
 // Auth API
 // =========================================================================
@@ -44,7 +83,7 @@ export const authApi = {
       headers: getHeaders(),
       body: JSON.stringify({ fullName, email, password }),
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async login(email: string, password: string) {
@@ -53,7 +92,7 @@ export const authApi = {
       headers: getHeaders(),
       body: JSON.stringify({ email, password }),
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async getMe() {
@@ -69,7 +108,7 @@ export const authApi = {
         setAuthToken(null);
         return null;
       }
-      return res.json();
+      return handleResponse(res);
     } catch {
       return null;
     }
@@ -90,7 +129,7 @@ export const documentsApi = {
       headers: getHeaders(true),
       body: formData,
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async submitText(
@@ -103,7 +142,7 @@ export const documentsApi = {
       headers: getHeaders(),
       body: JSON.stringify({ text, title, options }),
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async getMyDocuments() {
@@ -111,7 +150,7 @@ export const documentsApi = {
       method: 'GET',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async getById(id: string) {
@@ -119,7 +158,7 @@ export const documentsApi = {
       method: 'GET',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async download(id: string, fileName?: string, format?: string) {
@@ -187,7 +226,7 @@ export const documentsApi = {
       method: 'GET',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res);
   },
 
   async delete(id: string) {
@@ -195,6 +234,6 @@ export const documentsApi = {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res);
   },
 };

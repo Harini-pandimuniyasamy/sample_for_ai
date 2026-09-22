@@ -60,10 +60,23 @@ export const createApp = () => {
   app.use('/api/users', userRoutes);
   app.use('/api/documents', documentRoutes);
 
-  // Secondary aliases (/app/*) in case VITE_API_URL is configured as /app
+  // Secondary aliases (/app/* and /app/api/*) in case VITE_API_URL is configured as /app or /app/api
   app.use('/app/auth', authRoutes);
   app.use('/app/users', userRoutes);
   app.use('/app/documents', documentRoutes);
+  app.use('/app/api/auth', authRoutes);
+  app.use('/app/api/users', userRoutes);
+  app.use('/app/api/documents', documentRoutes);
+
+  // Direct top-level routes fallback in case relative paths are used without prefix
+  app.use('/auth', authRoutes);
+  app.use('/users', userRoutes);
+  app.use('/documents', documentRoutes);
+
+  // Catch-all 404 JSON handler for API paths to prevent falling through to HTML SPA
+  app.use(['/api/*', '/app/*', '/app/api/*'], (_req, res) => {
+    res.status(404).json({ success: false, message: 'API route not found' });
+  });
 
   // Error Handler Middleware
   app.use(errorHandler);

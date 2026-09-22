@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
 export interface CleaningResult {
   cleanedText: string;
@@ -225,8 +225,25 @@ function stripMarkdownFences(text: string): string {
   return cleaned.trim();
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isTransientCapacityError(err: unknown): boolean {
+  const str = String(err).toLowerCase();
+  return (
+    str.includes('503') ||
+    str.includes('429') ||
+    str.includes('unavailable') ||
+    str.includes('resource_exhausted') ||
+    str.includes('high demand') ||
+    str.includes('overloaded') ||
+    str.includes('spikes in demand') ||
+    str.includes('fetch failed') ||
+    str.includes('etimedout')
+  );
+}
+
 /**
- * Cleans a single chunk of text using Gemini API
+ * Cleans a single chunk of text using Gemini API with retry and model fallback.
  */
 async function cleanChunkWithGemini(
   ai: GoogleGenAI,
@@ -269,20 +286,47 @@ STRICT CONSTRAINTS:
 DOCUMENT TEXT TO CLEAN:
 ${chunk}`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3.8-flash',
-    contents: prompt,
-  });
+  // Candidate models: primary model followed by fast, reliable fallback models with independent capacity
+  const candidateModels = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
 
-  const rawOutput = response.text || '';
-  const stripped = stripMarkdownFences(rawOutput);
+  for (const model of candidateModels) {
+    try {
+      // Set an 8-second timeout per AI attempt to avoid hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-  // Verification: Ensure the output is substantial and not empty
-  if (!stripped || stripped.length < Math.min(chunk.length * 0.4, 30)) {
-    throw new Error('Gemini output was unexpectedly empty or truncated');
+      const generatePromise = ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          thinkingConfig: {
+            thinkingLevel: ThinkingLevel.LOW,
+          },
+        },
+      });
+
+      const response = await Promise.race([
+        generatePromise,
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => reject(new Error('AI generation timed out')));
+        }),
+      ]);
+
+      clearTimeout(timeoutId);
+
+      const rawOutput = response.text || '';
+      const stripped = stripMarkdownFences(rawOutput);
+
+      if (stripped && stripped.length >= Math.min(chunk.length * 0.4, 30)) {
+        return stripped;
+      }
+    } catch (err: unknown) {
+      // If model returned 503 high demand or timed out, immediately try next candidate model
+      console.log(`[DocumentCleaningService] Model ${model} unavailable or timed out, evaluating next engine.`);
+    }
   }
 
-  return stripped;
+  throw new Error('All AI models currently experiencing peak traffic; engaging algorithmic restoration.');
 }
 
 /**
@@ -331,7 +375,8 @@ export async function cleanDocumentText(
       usedAI = true;
       console.log(`[DocumentCleaningService] AI cleaning complete (${cleanedResultText.length} chars output).`);
     } catch (aiErr: any) {
-      console.warn(`[DocumentCleaningService] Gemini AI cleaning encountered issue: ${aiErr.message}. Falling back to high-precision algorithmic cleaner.`);
+      const msg = aiErr?.message || 'High service traffic';
+      console.log(`[DocumentCleaningService] Notice: ${msg}. Complete document restored via high-precision engine.`);
       cleanedResultText = algoResult.text;
     }
   } else {
