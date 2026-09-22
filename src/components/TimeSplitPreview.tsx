@@ -6,12 +6,18 @@ interface TimeSplitPreviewProps {
   originalText?: string;
   cleanedText?: string;
   fileName?: string;
+  artifactsCount?: number;
+  qualityBefore?: number;
+  qualityAfter?: number;
 }
 
 export const TimeSplitPreview: React.FC<TimeSplitPreviewProps> = ({
   originalText,
   cleanedText,
-  fileName = 'Quarterly_Audit_Report_2024.pdf',
+  fileName = 'Document',
+  artifactsCount,
+  qualityBefore = 61,
+  qualityAfter = 99,
 }) => {
   const [splitPercent, setSplitPercent] = useState(50);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -61,9 +67,9 @@ export const TimeSplitPreview: React.FC<TimeSplitPreviewProps> = ({
                 <Check className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-[#2C2830] font-heading">{fileName}</h4>
+                <h4 className="text-sm font-bold text-[#2C2830] font-heading truncate max-w-[260px] sm:max-w-md">{fileName}</h4>
                 <span className="text-[10px] text-[#3C8D87] font-bold uppercase tracking-wider">
-                  AI CLEANED &amp; RESTORED (99.4% QUALITY)
+                  AI CLEANED &amp; RESTORED ({qualityAfter}% QUALITY)
                 </span>
               </div>
             </div>
@@ -73,30 +79,16 @@ export const TimeSplitPreview: React.FC<TimeSplitPreviewProps> = ({
           </div>
 
           {/* Cleaned Content */}
-          <div className="space-y-4 my-auto text-xs leading-relaxed text-[#2C2830]">
-            <div className="p-3 rounded-xl bg-[#A8D5C2]/20 border border-[#3C8D87]/30 font-bold text-[#2C2830]">
-              SECTION 1. FINANCIAL AUDIT &amp; REVENUE RECONCILIATION
-            </div>
-            <p className="text-[#2C2830]">
-              During the fourth fiscal quarter of 2024, our independent auditing team conducted an exhaustive forensic analysis of the consolidated balance sheet. All line items have been validated against primary bank ledgers without discrepancies.
-            </p>
-            <p className="text-[#2C2830]">
-              Capital expenditure disbursements totaled $4,285,120, demonstrating an operational variance of less than 0.04% across all departments. All statutory tax filings have been submitted and confirmed by revenue commissioners.
-            </p>
-            <div className="p-3 rounded-xl bg-[#FFF8ED] border border-[#EADCC8] text-[11px] grid grid-cols-3 gap-2 shadow-xs">
-              <div>
-                <span className="text-[9px] text-[#978D91] block">TOTAL REVENUE</span>
-                <span className="font-bold text-[#2C2830]">$18,420,950</span>
+          <div className="my-auto py-2 overflow-y-auto max-h-[380px] sm:max-h-[410px] pr-2 space-y-3 text-xs leading-relaxed text-[#2C2830]">
+            {cleanedText ? (
+              <div className="whitespace-pre-wrap break-words font-mono">
+                {cleanedText}
               </div>
-              <div>
-                <span className="text-[9px] text-[#978D91] block">NET EBITDA</span>
-                <span className="font-bold text-[#3C8D87]">$5,820,100</span>
+            ) : (
+              <div className="p-4 rounded-xl bg-[#A8D5C2]/15 border border-[#3C8D87]/30 text-[#6F6670] text-center italic">
+                Cleaned document content will appear here.
               </div>
-              <div>
-                <span className="text-[9px] text-[#978D91] block">AUDIT RATING</span>
-                <span className="font-bold text-[#6B315E]">AAA COMPLIANT</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -122,9 +114,9 @@ export const TimeSplitPreview: React.FC<TimeSplitPreviewProps> = ({
                 <FileText className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-[#C65D45] font-heading">{fileName}</h4>
+                <h4 className="text-sm font-bold text-[#C65D45] font-heading truncate max-w-[260px] sm:max-w-md">{fileName}</h4>
                 <span className="text-[10px] text-[#C65D45] font-bold uppercase tracking-wider">
-                  ORIGINAL UNTOUCHED SCAN (61% QUALITY)
+                  ORIGINAL UNTOUCHED SOURCE ({qualityBefore}% QUALITY)
                 </span>
               </div>
             </div>
@@ -133,37 +125,25 @@ export const TimeSplitPreview: React.FC<TimeSplitPreviewProps> = ({
             </span>
           </div>
 
-          {/* Raw Noisy Content */}
-          <div className="space-y-4 my-auto text-xs leading-relaxed text-[#6F6670] opacity-90">
-            <div className="p-3 rounded-xl bg-[#C65D45]/10 border border-[#C65D45]/25 font-bold text-[#C65D45]">
-              SECT1ON   1 .   F1NANCIAL   AUD1T   &amp;   REVENU3   REC0NC1L1AT1ON
-            </div>
-            <p className="text-[#6F6670] line-through decoration-[#C65D45]">
-              Dur1ng   the   f0urth   f1scal   qu4rter   of   2024 ,   our   1ndependent   aud1t1ng   team   conducted   an   exhaust- \nive   forens1c   analys1s...
-            </p>
-            <p className="text-[#6F6670]">
-              Cap1tal   expend1ture   d1sbursements   t0taled   $ 4 , 285 , 120 ,   demonstrat1ng   an   operat1onal   var1ance...
-            </p>
-            <div className="p-3 rounded-xl bg-[#EADCC8]/40 border border-[#EADCC8] text-[11px] grid grid-cols-3 gap-2">
-              <div>
-                <span className="text-[9px] text-[#978D91] block">T0TAL REVENU3</span>
-                <span className="font-bold text-[#C65D45]">$ 18 , 420 , 950</span>
+          {/* Raw Original Content */}
+          <div className="my-auto py-2 overflow-y-auto max-h-[380px] sm:max-h-[410px] pr-2 space-y-3 text-xs leading-relaxed text-[#6F6670]">
+            {originalText ? (
+              <div className="whitespace-pre-wrap break-words font-mono opacity-90">
+                {originalText}
               </div>
-              <div>
-                <span className="text-[9px] text-[#978D91] block">N3T EB1TDA</span>
-                <span className="font-bold text-[#D9A441]">$ 5 , 820 , 100</span>
+            ) : (
+              <div className="p-4 rounded-xl bg-[#C65D45]/10 border border-[#C65D45]/25 text-[#6F6670] text-center italic">
+                Original document content will appear here.
               </div>
-              <div>
-                <span className="text-[9px] text-[#978D91] block">AUD1T RAT1NG</span>
-                <span className="font-bold text-[#C65D45]">UNVER1F1ED</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-[#EADCC8] text-[10px] text-[#C65D45]">
-            <span>Raw Analog Scan Document</span>
-            <span className="text-[#C65D45] font-bold">58 ARTIFACTS DETECTED</span>
+            <span>Raw Document Source</span>
+            <span className="text-[#C65D45] font-bold">
+              {artifactsCount !== undefined ? `${artifactsCount} ARTIFACTS RESOLVED` : 'ARTIFACTS RESOLVED'}
+            </span>
           </div>
         </div>
 

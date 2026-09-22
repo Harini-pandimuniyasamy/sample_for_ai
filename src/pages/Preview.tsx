@@ -19,7 +19,8 @@ export const Preview: React.FC = () => {
 
   const docTitle =
     processedDocument?.title ||
-    (uploadedFile?.name ? uploadedFile.name : 'Quarterly_Audit_Report_2024.pdf');
+    uploadedFile?.name ||
+    'Uploaded_Document';
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto pt-2 pb-12 animate-in fade-in duration-300">
@@ -45,6 +46,9 @@ export const Preview: React.FC = () => {
         fileName={docTitle}
         originalText={processedDocument?.originalText}
         cleanedText={processedDocument?.cleanedText}
+        artifactsCount={processedDocument?.artifactsRemoved}
+        qualityBefore={processedDocument?.readabilityScoreBefore}
+        qualityAfter={processedDocument?.readabilityScoreAfter}
       />
 
       {/* Required Navigation Buttons */}

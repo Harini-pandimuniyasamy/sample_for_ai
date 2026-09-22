@@ -45,9 +45,9 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-black text-[#24162F] leading-[1.1] tracking-tight font-heading">
-            Physical Document Processing <br className="hidden sm:block" />
+            AI-Powered Document Refinement <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-[#6B315E] via-[#C65D45] to-[#3C8D87] bg-clip-text text-transparent">
-              Powered by AI Architecture
+              Clean • Correct • Clarify
             </span>
           </h1>
 
